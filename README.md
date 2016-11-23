@@ -318,18 +318,25 @@ return array(
 
 As You can see in the "Recipes" section of this document, now You can easily provided the main 'keys' of this array as a single word in your URLs;
 
+## Caching
 
-
-
-
-
-
-
-
-
+Soft does perform two types of "caching" mechanisms; the first one is related to the "physical cache" of the outputted images; the second one provide a cache at HTTP Protocol level, using some concept that all modern browser understand;
 
 If you want to enable the "caching" of the files You can set the variable 'cache' to TRUE;
-**Warning:** in able to work You have to create a "cache" folder at `vendor/n3m3s7s/yajit/src/Yajit` and it must be writable by your PHP/Webserver account;
+
+**Warning:** if the 'cacheDir' parameter is not an absolute filesystem path, than Soft will assume that the 'cache' folder will be relative to the same directory of the 'soft.php' script;
+I suggest to place the "cache" folder outside your public root or to limit access to that folder by the web server;
+
+**Important**: the "cache" folder must be writable by your PHP/Webserver account;
+
+### Physical cache
+
+The "Physical cache" provides a convenient way to save all output images, using the server file system in an readable way; 
+ if the caching is enabled than all further requests to the same image with the same manipulations set will be processed only once and other client can benefit of faster 
+ rendering; 
+ 
+**Important**: the caching storage is "bounded" to the "Last modification time" of the original image file; as a result if the original image is overrided/overwritten wihout changing its name or set of modifications, a new "output" image will be created and "cached" accordingly; 
+
 
 
 
