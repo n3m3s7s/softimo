@@ -1,0 +1,14 @@
+/vendor
+/cache
+/.idea
+*.log
+*.bat
+*.rar
+*.zip
+*modified.*
+*watermarked.*
+composer.lock
+/soft.config.php
+/soft.recipes.php
+/test.php
+.htaccess

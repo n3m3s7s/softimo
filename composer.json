@@ -1,0 +1,25 @@
+{
+    "name": "n3m3s7s/softimo",
+    "version": "0.1.4",
+    "description": "Convert and optimize images with Glide, both server-side and on-the-fly",
+    "homepage": "https://github.com/n3m3s7s/soft",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fabio Politi",
+            "email": "fabio.politi.dev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "ext-gd": "*",
+        "illuminate/support": "5.*",
+        "league/glide": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "N3m3s7s\\Soft\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}

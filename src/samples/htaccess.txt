@@ -1,0 +1,4 @@
+RewriteEngine On
+<IfModule mod_rewrite.c>
+RewriteRule ^i\/(.+)$ soft.php?param=$1 [B,L,NC]
+</IfModule>

@@ -1,0 +1,4 @@
+# nginx configuration
+location /i {
+    rewrite ^/i\/(.+)$ /soft.php?param=$1 break;
+}
