@@ -335,56 +335,271 @@ The "Physical cache" provides a convenient way to save all output images, using 
  if the caching is enabled than all further requests to the same image with the same manipulations set will be processed only once and other client can benefit of faster 
  rendering; 
  
-**Important**: the caching storage is "bounded" to the "Last modification time" of the original image file; as a result if the original image is overrided/overwritten wihout changing its name or set of modifications, a new "output" image will be created and "cached" accordingly; 
+**Important**: every caching file is "bounded" to the "Last modification time" of the original image file; as a result if the original image is overrided/overwritten wihout changing its name (or set of manipulations), a new "output" image will be created and "cached" accordingly; 
+
+All caching files are stores in the "cacheDir" folder, setted in the configuration file; if this option is not overrided (or if its value is NULL) than Soft will try 
+to store all files in the "cache/soft" directory, relative to the "soft.php" script location; obviously the "cacheDir" folder must be writeable, and we suggest to provide a directory outside the webserver scope for security reasons;
+
+The caching structure is the one provided by Glide (http://glide.thephpleague.com/1.0/config/source-and-cache/); 
+as a result every source file manipulated by Soft will be cache in a directory with the same name of the original file, which will contains all the variations of a single image;
+
+For example if the source image is "kayaks.jpg" then You will find a directory named "kayaks.jpg" under the "cacheDir" folder;
+
+if You want to purge the cache of a single file (with all its variations) You can easily delete the folder that represents the single source image;
+ 
+However You can use the SoftFactory PHP Class, which expose a set of useful methods to work with Soft assets;
+
+**Note**: in the file https://github.com/n3m3s7s/softimo/blob/master/src/samples/factory_purge.php there is a quick example on how to use the factory tools;
+
+**Remember**: is "post-processing optimization" is enabled, than the cache image will be also optimized only during its creation, accordingly to its mime type;
+
+This can be a time-consuming process (especially for PNGs) but Soft will assure that will be executed only for the first time and every subsequent request to the same resource will benefit of the cache mechanism;
+
+Please refer to the "post-optimization" section of this document for more details;
+
+###HTTP Cache
+
+The "HTTP Cache" acts when the resource is sent back to the browser in a response; modern browsers can benefit of a structured set of headers
+ that tell them how to threat assets in order to provide minimal exchanging of data between the client and server;
+ 
+ furthermore Soft will automatically set the "Expire" header of every single image very far in the future, since this practice in very well suited in Advanced SEO optimization;
+  
+ In details Soft will send the following HTTP headers to the browser:
+  
+ 1. "Cache-Control: public" =
+ This tells the browser that the response can be cached normally;
+ 
+ 2. "Expires: Sun, 13 Sep 2026 11:32:37 GMT" = This marks the expiration date of the response very far in the future
+ (exactly 10 years from the Last Modification time of the source image);
+ 
+ 3. "Last-Modified: Thu, 15 Sep 2016 11:32:37 GMT" = This is actually the last modification time of the original source image;
+ 
+ 4. "ETag: \"83af74db5d1fefa8d68526a3900f2ee6\"" = Soft will mark every response with an "Entity Tag"; this header will tell to a client how to identify in a unique way a single response from the server;
+ accordingly to HTTP caching layer (https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=it) in a future request a client will check 
+ if this can serve a cached response by its "entity tag" so that the resource will not be requested to the server (that will respond with a "304 Not Modified" HTTP status code);
+ 
+ 5. "Content-Type: image/jpeg" = the mime-type of the resource; this will be set accordingly to the source image type or if the resource has a custom "format" manipulation (http://glide.thephpleague.com/1.0/api/encode/);
+
+ 6. "Content-Length: 11199" = the exact length of the resource, calculated in real time (if the cache is enabled, this will be the content-length of the cached resource, not the source one);
+
+
+Has seen in the upper statements, every time the same resource will be requested by a client, if the latter is capable of sending in its request a "If-None-Match" header,
+than the server will simply respond with a "304 Not Modified" HTTP status, without sending or even reading the physical resource;
+
+
+## Post-processing optimization
+Usually when an image gets manipulated on a server-side base, either with GD or ImageMagick driver, the resulting asset will
+ be generally smaller than the original one, but still the new resource will not be "optimized";
+ 
+"To optimize" an image generally refers to the process of stripping metadata and unnecessary informations from the physical image;
+  
+please take a look at this article by Google (https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/image-optimization?hl=it) in 
+order to have a complete point of view of this manner;
+
+generally speaking the "final optimization" cannot be efficiently achieved with a server-side language; 
+ 
+it will be required to use a server tool to do the job, but this tools heavily depends on the mime type of the asset You want to "optimize";
+
+actually there are 4/5 tools that are widely used:
+
+1. **jpegtran/jpegoptim**: these are two different tools aimed at optimizing JPG files;
+2. **optipng/pngquant**: these are two different tools aimed at optimizing PNG files;
+3. **gifsicle**: this the main tool capable to optimize GIF files;
+4. **webp**: this is a new image mime-type created by Google; only Chrome and Opera currently supports this format;
+
+Soft will use *only* the following tools:
+ 
+- `jpegoptim` for JPG files; the tool will be invoked with these parameters: `-p -P -o --force --strip-all --all-progressive`;
+- `optipng` for PNG files; the tool will be invoked with these parameters: `-o7 -strip all -clobber`;
+- `gifsicle` for GIF files; the tool will be invoked with these parameters: `-b -O5`;
+- `webp` for WEBP files; the tool will be invoked with these parameters: `-q 80`;
+
+**Note**: please refer to the official documentations of these tools for understanding parameters and keeping version updated;
+
+using these tools manually or at run-time on every source can be very difficult and time-consuming, since they 
+are all different tools with different parameters and directives; 
+ 
+furthermore this tools must be installed on the server; while its very simple to configure them on a Unix machine 
+on the other side is not so simple to install them on a Windows machine;
+
+Soft can easily detect which operating system it is working on and adapt the "post-optimization" process accordingly;
+
+**Warning**: if Soft is running on a Windows machine, then You don't need to install and compile all these tools - they are available under the "bin" folder 
+located in the Soft source directory;
+
+**Warning**: on a Unix machine all tools must be installed by You or your system provider; however most of this tools, once installed, will be 
+available under the "/user/bin" path of the machine (this is the standard configuration on which Soft will rely on);
+
+if you want to change the paths of one or more executable, you can adapt the paths in the configuration files; 
+please note that the paths are organized into OS "windows" and "unix", since Mac it's a Unix bases machine;
+ 
+###How it works
+Every time Soft will cache a resource, than it will be passed to the "post-optimization routine";
+
+if You want to ignore the "post-optimization" process You can disable it in the configuration file;
+
+basically Soft will read the mime-type of the cached resource, and only at the first time, will try to execute a system-call 
+with the correct tool, passing the parameters we have seen before;
+
+this can be a time consuming process, especially for PNGs, but it is very worthy, since this will be done once per image/manipulation 
+and it does not have nothing to do with Browser/HTTP cache;
+
+**Remember**: nowadays Google and other performance tools know if a given resource has been "post-optimized"; 
+usually frameworks and CMSs have plugins or bundles that can perform this kind of operation on your app media library, 
+ but this will be done on a "mass" base and can lead to "override" issues, especially if You other people want to override an asset (the uploaded asset will override the optimized one and You have to wait for the mass process to take effect);
+  instead Soft will operate only on-demand and on only on the cached asset, while the original source will never be touched; 
 
 
 
+## Logging
 
-There are four possible modes:
+If You want to know what Soft is doing You can enable its logging system; Soft will dump every step and even some server side info 
+ such as "post-optimization" output result;
+ 
+**Warning**: please keeps logging disabled on a production server since You don't want wasting time writing/reading the file system;
 
-- `0` none
-- `1` resize
-- `2` resize and crop (used in the example)
-- `3` crop
-- `4` resize to fit
+When logging is enabled, a new log file will be automatically created on a daily basis;
 
-If you're using mode `2` or `3` for image cropping you need to specify the reference position (gravity):
+the log file will be named "soft.YYYY-MM-DD.log" (where YYYY-MM-DD refers to the current date) and will be placed:
 
-	+---+---+---+
-	| 1 | 2 | 3 |
-	+---+---+---+
-	| 4 | 5 | 6 |
-	+---+---+---+
-	| 7 | 8 | 9 |
-	+---+---+---+
+- if the "logDir" option is not null and is an existing directory, than the file will be put here (the folder must be writable);
+- if your using the on-the-fly Soft tool, the log file will be placed in the same directory of the "soft.php" script;
+- if your using the factory Soft tool, the log file will be placed in the "sourceDir" of your configuration;
 
-If you're using mode `2` or `3` for image cropping, there is an optional fifth parameter for background color. This can accept shorthand or full hex colors.
+The content of a log file is similar to:
 
-- *For `.jpg` images, it is advised to use this if the crop size is larger than the original, otherwise the extra canvas will be black.*
-- *For transparent `.png` or `.gif` images, supplying the background color will fill the image. This is why the setting is optional*
+```php
+[2016-11-23 13:11:19] - PARAM: w_260/backgrounds/dark_souls.jpg
+[2016-11-23 13:11:19] - N3m3s7s\Soft\Soft::setSourceFile: Array
+(
+    [sourceFile] => backgrounds/dark_souls.jpg
+    [sourceFilepath] => D:/wamp/www/soft/test/backgrounds/dark_souls.jpg
+)
 
-The extra fifth parameter makes the URL look like this:
+[2016-11-23 13:11:19] - Last-Modified: Thu, 15 Sep 2016 11:32:37 GMT
+[2016-11-23 13:11:19] - MODIFICATIONS: Array
+(
+    [fm] => pjpg
+    [w] => 260
+    [q] => 80
+)
 
-	<img src="{$root}/i/2/80/80/5/fff{image/@path}/{image/filename}" />
+[2016-11-23 13:11:19] - glideServerParameters: Array
+(
+    [source] => D:/wamp/www/soft/test
+    [cache] => cache
+    [driver] => gd
+    [watermarks] => D:/wamp/www/soft/test
+)
 
-- *If you wish to crop and maintain the aspect ratio of an image but only have one fixed dimension (that is, width or height), simply set the other dimension to 0*
+[2016-11-23 13:11:19] - Modifications that will be applied to the image: Array
+(
+    [fm] => pjpg
+    [w] => 260
+    [q] => 80
+)
+
+[2016-11-23 13:11:19] - Optimizing file
+[2016-11-23 13:11:19] - Executing: D:\wamp\www\soft\src//bin/jpegoptim.exe -p -P -o --force --strip-all --all-progressive cache/backgrounds/dark_souls.jpg/43c5f8c3b5d9d7141caca3e088fca639
+[2016-11-23 13:11:19] - Shell output: Array
+(
+    [0] => cache/backgrounds/dark_souls.jpg/43c5f8c3b5d9d7141caca3e088fca639 258x162 24bit P JFIF  [OK] 11260 --> 11199 bytes (0.54%), optimized.
+)
+
+[2016-11-23 13:11:19] - OUTPUT FILE: cache/backgrounds/dark_souls.jpg/43c5f8c3b5d9d7141caca3e088fca639
+[2016-11-23 13:11:19] - OUTPUT HEADERS: Array
+(
+    [Cache-Control] => public
+    [Expires] => Sun, 13 Sep 2026 11:32:37 GMT
+    [Last-Modified] => Thu, 15 Sep 2016 11:32:37 GMT
+    [ETag] => "83af74db5d1fefa8d68526a3900f2ee6"
+    [Content-Type] => image/jpeg
+    [Content-Length] => 11199
+)
+```
+
+as You can see full details will be provided about: 
+
+- given parameter in the url;
+- target source file;
+- last modification time of the source file;
+- parameters that will be passed to the glideServer Factory;
+- ultimate modification that will be applied to the source image;
+- optimization info;
+- path of the cached file;
+- headers sent back to the client;
 
 
-### External sources & Trusted Sites (still in progress)
+## Factory Image Optimizations
+The "on-the-fly" optimization is very powerful, but sometimes You have to deal with image manipulations
+ on the server-side; it will be very nice if the same features of Soft will be available as PHP class and methods;
+ 
+Soft will give to You two approaches to use its features in your PHP scripts:
 
-In order pull images from external sources, you must set up a white-list of trusted sites. To do this, edit the "config.php" file under the setting "trusted-sites". To match anything use a single asterisk (`*`).
+### SoftImage Class
+The "SoftImage" class is a very simple class that can be used to quickly apply some manipulations to a given source file 
+and save the resulting asset as a given output image;
 
-The URL then requires a sixth parameter, external, (where the fourth and fifth parameter may be optional), which is simply `1` or `0`. By default, this parameter is `0`, which means the image is located on the same domain as YAJIT. Setting it to `1` will allow YAJIT to process external images provided they are on the Trusted Sites list.
+its usage is very simple, and You can find an example in this file (https://github.com/n3m3s7s/softimo/blob/master/src/samples/standalone.php):
 
-	<img src="{$root}/i/1/80/80/1/{full/path/to/image}" />
-	                                ^ External parameter
+```php
+<?php
+require_once 'vendor/autoload.php';
+use N3m3s7s\Soft\SoftImage as Img;
+$pathToImage = "test/kayaks.jpg";
+$outputImage = "test/kayaks_modified.jpg";
+// apply modifications to a source image and then saves the output as a new file
+// this process do not cache any resource
+Img::create($pathToImage)
+    ->modify(['w'=> 50, 'filt'=>'greyscale'])
+    ->save($outputImage);
+```
 
-### Recipes (basic functionality)
+**Warning**: this class works under the following considerations:
+- no configuration file will be read; the source image and the output image do not follow any rule and they are relative to the "sourceDir";
+- no caching file will be created;
+- no automatic manipulations will be applied;
+- no "post-optimization" will be performed on the output image;
 
-Recipes are named rules for the YAJIT settings which help improve security and are more convenient. Open the file `vendor/n3m3s7s/yajit/src/Yajit/config/recipes.php`. A recipe URL might look like:
+as You can see this class can be used only to "expose" standard Glide features on given resources, without any logic provided by Soft;
 
-	<img src="{$root}/i/thumbs{image/@path}/{image/filename}" />
+if You want to leverage all Soft features in a PHP script You can use the "Softy" factory class;
 
-When YAJIT parses a URL like this, it will check the recipes file for a recipe with a handle of `thumbs` and apply it's rules. You can completely disable dynamic YAJIT rules and choose to use recipes only which will prevent a malicious user from hammering your server with large or multiple YAJIT requests.
 
-Recipes can be copied between installations and changes will be reflected by every image using this recipe.
+### Softy Class
+The "Softy", or "SoftFactory", class can be used to expose all features of Soft to your PHP scripts;
+
+all concepts we have encountered so far will be applied on the assets involved by the Softy Class;
+
+the only difference is that its higly adviced to keep only one instance of the Sofy class, since 
+the configuration override can only be set on the "create" method;
+
+the "create" method accepts both an array of configuration overrides or a path to a custom configuration file;
+it return the factory class itself that can be used directly through a chaining mechanism;
+
+its usage is very simple, and You can find few examples in this folder (https://github.com/n3m3s7s/softimo/blob/master/src/samples):
+
+Let's view some quick usage:
+
+```php
+<?php
+require_once 'vendor/autoload.php';
+use N3m3s7s\Soft\SoftFactory as Softy;
+$softy = Softy::create([
+    'cacheDir' => 'cache',
+    'sourceDir' => 'D:/wamp/www/soft/test',
+]);
+$sourceFile = "backgrounds/dark_souls.jpg";
+$outputFile = "test/backgrounds/dark_souls_modified.jpg";
+$softy->file($sourceFile)
+    ->modify([
+        'w'=> 50,
+        'filt'=>'greyscale'
+    ])
+    ->save($outputFile);
+```
+
+instead of the "SoftImage" class all assets will be relative to the given "sourceDir", and the manipulated file 
+will be accordingly cached and "post-optimized"; all automatics manipulations injected by Soft will be executed;
+
+You are free to use the SoftImage or Softy class or both;
