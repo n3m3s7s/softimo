@@ -30,7 +30,7 @@ Then run `composer update` or `composer install`;
 
 
 ## On-the-fly Image Optimizations
-In order to use and activate the "on-the-fly" optimization You need Apache or Nginx, and a single PHP file at the (public) root of your application;
+In order to use and activate the "on-the-fly" optimization You need Apache (with mod_rewrite) or Nginx, and a single PHP file at the (public) root of your application;
 
 Now, if You are using Apache, open the *.htaccess* file of your project or create a new one;
 add this rule to the .htaccess file (https://github.com/n3m3s7s/softimo/blob/master/src/samples/htaccess.txt):
@@ -65,8 +65,8 @@ $server->response();
 
 That's all! You can now use *Soft* to dinamically process image on the fly!
 
-Note: Once you run composer, You can navigate to the folder "vendor/n3m3s7s/softimo/src/samples" in order to find some sample scripts and the "stub" files for both Apache and Nginx configuration;
-if You want to quickly test Soft with some images the folder "vendor/n3m3s7s/softimo/src/test" contains some test images to play with.
+Note: Once you run composer, You can navigate to the folder `"vendor/n3m3s7s/softimo/src/samples"` in order to find some sample scripts and the "stub" files for both Apache and Nginx configuration;
+if You want to quickly test Soft with some images the folder `"vendor/n3m3s7s/softimo/src/test"` contains some test images to play with.
 
 ## Usage
 
@@ -78,9 +78,9 @@ The image manipulation is controlled via the URL, eg.:
 
 Where the convention is:
 
-1. *$root* := is the standard root/url of your application (could be omitted if You want to use relative paths);
-2. *@mod1,@mod2,@mod3,...* := all the manipulations(*) You want to activate on the image;
-3. *@path/to/your/image* := the relative path pointing to your image(**);
+1. **$root** := is the standard root/url of your application (could be omitted if You want to use relative paths);
+2. **@mod1,@mod2,@mod3,...** := all the manipulations(*) You want to activate on the image;
+3. **@path/to/your/image** := the relative path targeting your image;
 
 (*) all manipulations provided by "Glide" are supported but in Soft all manipulations must follow these rules:
 
@@ -92,19 +92,19 @@ here are some quick examples:
 
     /i/w_400,h_300,fit_crop/test/kayaks.jpg    
     
-The source image, located at "test/kayaks.jpg", will be resized to 400x300 pixels and the resulting image will match the width and height constraints without distorting the image.
+The source image, located at `"test/kayaks.jpg"`, will be resized to 400x300 pixels and the resulting image will match the width and height constraints without distorting the image.
 
     /i/h_500,or_90,bri_25/test/kayaks.jpg    
     
-The source image, located at "test/kayaks.jpg", will be proportionally resized to 500 pixels in height, then "rotated" ("or" stands for "orientation" => http://glide.thephpleague.com/1.0/api/orientation/) the image by 90 degrees and the resulting image will have a "brightness" of 25 (http://glide.thephpleague.com/1.0/api/adjustments/).
+The source image, located at `"test/kayaks.jpg"`, will be proportionally resized to 500 pixels in height, then "rotated" ("or" stands for "orientation" => http://glide.thephpleague.com/1.0/api/orientation/) by 90 degrees and the resulting image will have a "brightness" of 25 (http://glide.thephpleague.com/1.0/api/adjustments/).
 
 As You can see this way of building links and passing parameters is very similar to the Cloudinary service (http://cloudinary.com/);
 
-Remember: You can use every manipulation supported by Glide (http://glide.thephpleague.com/1.0/api/quick-reference/) but Soft will set some automatic manipulations for You:
+**Remember**: You can use every manipulation supported by Glide (http://glide.thephpleague.com/1.0/api/quick-reference/) but Soft will set some automatic manipulations for You:
 
 1. If the source path is targeting a JPG, than the output/response image will be converted to a "progressive JPG"; in Glide this is usually achieved with a manual "encoding", via the "format" parameter (see http://glide.thephpleague.com/1.0/api/encode/);
 "progressive jpegs" are usually good for performance and Seo Optimization;
-2. If the "q" parameter is not provided by a manipulation or by a recipe, than Soft will use the "image.quality" value exposed in the configuration file (default is 80); this value will be provided to the Glide factory encoding service (http://glide.thephpleague.com/1.0/api/encode/);
+2. If the "q" parameter is not provided by a manipulation or by a "recipe", than Soft will use the "image.quality" value exposed in the configuration file (default is 80); this value will be provided to the Glide factory encoding service (http://glide.thephpleague.com/1.0/api/encode/);
 3. If the source image ends with a "@2x.ext" or "@3x.ext" (like a retina asset) but the targeting image file does not exist, than the "dpr" (device pixel ratio) parameter will be automatically set to "2" for "@2x.ext" and to "3" for "@3x.ext" (http://glide.thephpleague.com/1.0/api/pixel-density/);
 
 Examples:
@@ -112,9 +112,9 @@ Examples:
     /i/w_400,h_300,fit_crop/test/kayaks@2x.jpg
     /i/w_400,h_300,fit_crop/test/kayaks@3x.jpg
     
-If the file "kayaks@2x.jpg" does not exist (and the "kayaks.jpg" image does) then the resulting image will be double-sized (800x600);
+If the file `kayaks@2x.jpg` does not exist (and the "kayaks.jpg" image does) then the resulting image will be double-sized (800x600);
 
-Again, if the file "kayaks@3x.jpg" does not exist (and the "kayaks.jpg" image does) then the resulting image will be triple-sized (1200x900);
+Again, if the file `kayaks@3x.jpg` does not exist (and the "kayaks.jpg" image does) then the resulting image will be triple-sized (1200x900);
 
 This is very useful when You want to use the same modifications but "retina" assets are required and can be served wihout repeating yourself, or when You want to provide different variations of the same image, such as in the new "srcset" HTML5 attribute;
 
@@ -122,7 +122,7 @@ This is very useful when You want to use the same modifications but "retina" ass
     src="/i/w_400,h_300,fit_crop/test/kayaks.jpg"
     srcset="/i/w_400,h_300,fit_crop/test/kayaks@2x.jpg 2x, /i/w_400,h_300,fit_crop/test/kayaks@3x.jpg 3x">
     
-Note: this is can be rewritten in a very useful/readable/sep-friendly manner by configuring a "Recipe";
+Note: this is can be rewritten in a very useful/readable/seo-friendly manner by configuring a "Recipe";
 
 ### Targeting images
 
@@ -132,7 +132,7 @@ if You want to change this behaviour or if You want to omit some part of the "so
 
 Please refer to the "config" section in order to see how you can change the main "Soft" configuration;
 
-in this section the main concept I want to show You is that a custom "sourceDir" is provided that the "target" imae in the URI must be provided without the full relative path;
+in this section the main concept I want to show You is that when a custom "sourceDir" is provided than the "target" image in the URI must be provided without the full relative path;
 
 #####Look! We have examples:
 
@@ -156,7 +156,7 @@ Consider the following app structure (content of "/var/www/example.com"):
     composer.lock
     ...
 
-We assume that the virtual host for the example.com domain is pointing to the "public" folder, where the "soft.php" is located;
+We assume that the virtual host for the `example.com` domain is pointing to the "public" folder, where the "soft.php" is located;
 
 as You can see in this configuration the "kayaks.jpg" file cannot be accessed in a browser;
 
@@ -186,7 +186,7 @@ a recipe allows to instantly target a particular set of manipulations in a simpl
 
 furthermore they can play a role in Search Engine Optimization of your app, since they can be easily mapped as "semantic" paths;
 
-#####Look! We have examples:
+
 
 Let's take the previous Url used so far, such as:
 
@@ -294,9 +294,9 @@ So You can provide a small set of key/values in order to adapt Soft to your need
 #### Recipes: Configuration
 The same logic for the "configuration override" applies for your custom "recipes";
 
-Create a new file, named 'soft.recipes.php', located in the same folder of your 'soft.php' file;
+Create a new file, named `'soft.recipes.php'`, located in the same folder of your `'soft.php'` file;
 
-The 'soft.recipes.php' file must return a PHP array with a set of modifications organized as an associative array;
+The `'soft.recipes.php'` file must return a PHP array with a set of modifications organized as an associative array;
 
 You can open the `vendor/n3m3s7s/softimo/src/samples/soft.recipes.php` file (https://github.com/n3m3s7s/softimo/blob/master/src/samples/soft.recipes.php) to get a quick way of simple custom 'recipes';
 
@@ -316,13 +316,14 @@ return array(
 );
 ```
 
-As You can see in the "Recipes" section of this document, now You can easily provided the main 'keys' of this array as a single word in your URLs;
+As You can see in the "Recipes" section of this document, now You can easily provide the main 'keys' of this array as a single word in your URLs;
 
 ## Caching
 
-Soft does perform two types of "caching" mechanisms; the first one is related to the "physical cache" of the outputted images; the second one provide a cache at HTTP Protocol level, using some concept that all modern browser understand;
+Soft does perform two types of "caching" mechanisms; the first one is related to the "physical cache" of the outputted image; 
+the second one provides a cache at HTTP Protocol level, using some concepts that all modern browser can understand;
 
-If you want to enable the "caching" of the files You can set the variable 'cache' to TRUE;
+If you want to disable the "phyisical caching" of the files You can set the variable 'cache' to FALSE in your configuration override file;
 
 **Warning:** if the 'cacheDir' parameter is not an absolute filesystem path, than Soft will assume that the 'cache' folder will be relative to the same directory of the 'soft.php' script;
 I suggest to place the "cache" folder outside your public root or to limit access to that folder by the web server;
@@ -332,16 +333,16 @@ I suggest to place the "cache" folder outside your public root or to limit acces
 ### Physical cache
 
 The "Physical cache" provides a convenient way to save all output images, using the server file system in an readable way; 
- if the caching is enabled than all further requests to the same image with the same manipulations set will be processed only once and other client can benefit of faster 
+ if the caching is enabled than all further requests to the same image with the same manipulations set will be processed only once and other clients can benefit of faster 
  rendering; 
  
 **Important**: every caching file is "bounded" to the "Last modification time" of the original image file; as a result if the original image is overrided/overwritten wihout changing its name (or set of manipulations), a new "output" image will be created and "cached" accordingly; 
 
 All caching files are stores in the "cacheDir" folder, setted in the configuration file; if this option is not overrided (or if its value is NULL) than Soft will try 
-to store all files in the "cache/soft" directory, relative to the "soft.php" script location; obviously the "cacheDir" folder must be writeable, and we suggest to provide a directory outside the webserver scope for security reasons;
+to store all files in the "cache/soft" directory, relative to the "soft.php" script location; obviously the "cacheDir" folder must be writeable, and I suggest to provide a directory outside the webserver scope for security reasons;
 
 The caching structure is the one provided by Glide (http://glide.thephpleague.com/1.0/config/source-and-cache/); 
-as a result every source file manipulated by Soft will be cache in a directory with the same name of the original file, which will contains all the variations of a single image;
+as a result every source file manipulated by Soft will be cached in a directory with the same name of the original file, which will contains all the variations of the single image;
 
 For example if the source image is "kayaks.jpg" then You will find a directory named "kayaks.jpg" under the "cacheDir" folder;
 
@@ -351,7 +352,7 @@ However You can use the SoftFactory PHP Class, which expose a set of useful meth
 
 **Note**: in the file https://github.com/n3m3s7s/softimo/blob/master/src/samples/factory_purge.php there is a quick example on how to use the factory tools;
 
-**Remember**: is "post-processing optimization" is enabled, than the cache image will be also optimized only during its creation, accordingly to its mime type;
+**Remember**: if "post-processing optimization" is enabled, than the cache image will be also optimized only during its creation, accordingly to its mime type;
 
 This can be a time-consuming process (especially for PNGs) but Soft will assure that will be executed only for the first time and every subsequent request to the same resource will benefit of the cache mechanism;
 
@@ -394,11 +395,11 @@ Usually when an image gets manipulated on a server-side base, either with GD or 
 "To optimize" an image generally refers to the process of stripping metadata and unnecessary informations from the physical image;
   
 please take a look at this article by Google (https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/image-optimization?hl=it) in 
-order to have a complete point of view of this manner;
+order to have a complete point of view of this matter;
 
 generally speaking the "final optimization" cannot be efficiently achieved with a server-side language; 
  
-it will be required to use a server tool to do the job, but this tools heavily depends on the mime type of the asset You want to "optimize";
+it will be required to use more than a server tool to do the job, but this tools heavily depends on the mime type of the asset You want to "optimize";
 
 actually there are 4/5 tools that are widely used:
 
@@ -446,8 +447,8 @@ and it does not have nothing to do with Browser/HTTP cache;
 
 **Remember**: nowadays Google and other performance tools know if a given resource has been "post-optimized"; 
 usually frameworks and CMSs have plugins or bundles that can perform this kind of operation on your app media library, 
- but this will be done on a "mass" base and can lead to "override" issues, especially if You other people want to override an asset (the uploaded asset will override the optimized one and You have to wait for the mass process to take effect);
-  instead Soft will operate only on-demand and on only on the cached asset, while the original source will never be touched; 
+ but this will be done on a "mass" basis and can lead to "override" issues, especially if You or other people want to override an asset (the uploaded asset will override the optimized one and You have to wait for the mass process to take effect);
+  instead Soft will operate only on-demand and only on the cached asset, while the original source will never be touched; 
 
 
 
@@ -456,7 +457,7 @@ usually frameworks and CMSs have plugins or bundles that can perform this kind o
 If You want to know what Soft is doing You can enable its logging system; Soft will dump every step and even some server side info 
  such as "post-optimization" output result;
  
-**Warning**: please keeps logging disabled on a production server since You don't want wasting time writing/reading the file system;
+**Warning**: please keeps logging disabled on a production server since You don't want Soft wasting time writing/reading the file system on every request;
 
 When logging is enabled, a new log file will be automatically created on a daily basis;
 
@@ -524,8 +525,8 @@ as You can see full details will be provided about:
 - target source file;
 - last modification time of the source file;
 - parameters that will be passed to the glideServer Factory;
-- ultimate modification that will be applied to the source image;
-- optimization info;
+- ultimate manipulations that will be applied on the source image;
+- optimization info/results;
 - path of the cached file;
 - headers sent back to the client;
 
@@ -556,9 +557,10 @@ Img::create($pathToImage)
 ```
 
 **Warning**: this class works under the following considerations:
-- no configuration file will be read; the source image and the output image do not follow any rule and they are relative to the "sourceDir";
+- no configuration file will be read; the source image and the output image do not follow any rule and they are NOT relative to the "sourceDir";
 - no caching file will be created;
 - no automatic manipulations will be applied;
+- no "recipe" can be used in the manipulations array;
 - no "post-optimization" will be performed on the output image;
 
 as You can see this class can be used only to "expose" standard Glide features on given resources, without any logic provided by Soft;
@@ -571,11 +573,11 @@ The "Softy", or "SoftFactory", class can be used to expose all features of Soft 
 
 all concepts we have encountered so far will be applied on the assets involved by the Softy Class;
 
-the only difference is that its higly adviced to keep only one instance of the Sofy class, since 
+the only difference is that its highly recommended to keep only one instance of the Softy class, since 
 the configuration override can only be set on the "create" method;
 
 the "create" method accepts both an array of configuration overrides or a path to a custom configuration file;
-it return the factory class itself that can be used directly through a chaining mechanism;
+it returns the factory class itself that can be directly used through a chaining mechanism;
 
 its usage is very simple, and You can find few examples in this folder (https://github.com/n3m3s7s/softimo/blob/master/src/samples):
 
@@ -600,6 +602,6 @@ $softy->file($sourceFile)
 ```
 
 instead of the "SoftImage" class all assets will be relative to the given "sourceDir", and the manipulated file 
-will be accordingly cached and "post-optimized"; all automatics manipulations injected by Soft will be executed;
+will be accordingly cached and "post-optimized"; all automatics manipulations injected by Soft will be executed and all "recipes" will be available;
 
-You are free to use the SoftImage or Softy class or both;
+You are free to use the SoftImage or Softy class or both for your needs;
