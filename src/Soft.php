@@ -201,10 +201,21 @@ class Soft
         $cacheDir = $settings['cacheDir'];
         $sourceFileName = $this->sourceFile;
 
+        $isGif = false;
+        if(strtolower(substr($sourceFileName,-3)) == 'gif'){
+            $isGif = true;
+        }
+
         $modificationParameters = $this->modificationParameters ? $this->modificationParameters : null;
         Utils::log($modificationParameters,"Modifications that will be applied to the image");
         $cacheFileExists = $glideServer->cacheFileExists($sourceFileName,$modificationParameters);
-        $conversionResult = $cacheDir.'/'.$glideServer->makeImage($sourceFileName, $modificationParameters);
+        if($isGif){
+            $conversionResult = $this->sourceFilepath;
+            $cacheFileExists = true;
+        }else{
+            $conversionResult = $cacheDir.'/'.$glideServer->makeImage($sourceFileName, $modificationParameters);
+        }
+
         $this->outputFile = $conversionResult;
         if($cacheFileExists == false)
             $this->optimize();
@@ -242,6 +253,11 @@ class Soft
         }
 
         $isWin = Utils::serverOS() == 1;
+
+        if($isWin and $format == 'png'){
+            //do not optimize png on windows, since it is very heavy
+            return;
+        }
 
         $suppressOutput = ($isWin ? '' : ' 1> /dev/null 2> /dev/null');
 
