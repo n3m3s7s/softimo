@@ -26,6 +26,7 @@ class Soft
     protected $cache;
     protected $glideServer;
     protected $modificationParameters = [];
+    protected $mime;
 
     function __construct()
     {
@@ -130,6 +131,14 @@ class Soft
                 $this->modification('fm','pjpg');
             }
         }
+        //set WEBP
+        if (strpos(strtolower($sourceFile), '.webp') !== false) {
+            $sourceFile = str_replace('.webp', '', $sourceFile);
+            $this->modification('fm','webp');
+            if(!isset($this->modificationParameters['q'])){
+                $this->modification('q',75);
+            }
+        }
 
         $sourceFilepath = rtrim($settings['sourceDir'],'/').'/'.$sourceFile;
         if(!file_exists($sourceFilepath)){
@@ -232,9 +241,14 @@ class Soft
         }
         Utils::log('Optimizing file');
         $file = $this->outputFile;
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $file);
-        finfo_close($finfo);
+        if(isset($this->mime)){
+            $mime = $this->mime;
+        }else{
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file);
+            finfo_close($finfo);
+        }
+        Utils::log($mime, "Calculated mime");
         switch ($mime){
             default:
             case 'image/jpg':
@@ -249,6 +263,10 @@ class Soft
 
             case 'image/gif':
                 $format = 'gif';
+                break;
+
+            case 'image/webp':
+                $format = 'webp';
                 break;
         }
 
@@ -270,9 +288,9 @@ class Soft
         }
 
         $bin['jpg'] .= " -p -P -o --force --strip-all --all-progressive :source";
-        $bin['png'] .= " -o7 -strip all -out :target -clobber :source";
+        $bin['png'] .= " -o3 -strip all -out :target -clobber :source";
         $bin['gif'] .= " -b -O5 :source :target";
-        $bin['webp'] .= " -q 80 :source -o :target";
+        $bin['webp'] .= " -q 75 :source -o :target";
 
         $cmd = str_replace([':source',':target'],[$file,$file],$bin[$format]);
 

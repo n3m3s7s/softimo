@@ -14,6 +14,7 @@ class SoftServer extends Soft
         Utils::log($param,'Modification parameter');
         $command = explode('/',$param)[0];
         $sourceFile = str_replace($command.'/','',$param);
+        Utils::log($sourceFile,'Given SourceFile');
         $this->setSourceFile($sourceFile);
 
         if($this->usingPlaceholder == false){
@@ -28,6 +29,7 @@ class SoftServer extends Soft
 
                 $this->header('Expires', $expires);
                 $this->header('Last-Modified', $last_modified_gmt);
+                $this->header('Cache-Control', 'max-age=2592000, public');
                 $this->header('ETag', "\"$etag\"");
                 Utils::log($last_modified_gmt,"Last-Modified");
             }
@@ -79,6 +81,23 @@ class SoftServer extends Soft
             $this->modification('q',$settings['image']['quality']);
         }
 
+        if(isset($this->modificationParameters['fm'])){
+            $format = $this->modificationParameters['fm'];
+            switch ($format){
+                case 'pjpg':
+                case 'jpeg':
+                case 'jpg':
+                    $this->mime = 'image/jpeg';
+                    break;
+                case 'png':
+                    $this->mime = 'image/png';
+                    break;
+                case 'webp':
+                    $this->mime = 'image/webp';
+                    break;
+            }
+        }
+
         Utils::log($this->modificationParameters,'MODIFICATIONS');
     }
 
@@ -91,9 +110,15 @@ class SoftServer extends Soft
     private function raw($img)
     {
         $image_path = $img->basePath();
-        $data = file_get_contents($image_path);
-        $mime = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $data);
-        $length = strlen($data);
+        if(!isset($this->mime)){
+            $data = file_get_contents($image_path);
+            $mime = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $data);
+            $length = strlen($data);
+        }else{
+            $mime = $this->mime;
+            $length = filesize($image_path);
+        }
+
         $this->header('Content-Type', $mime);
         $this->header('Content-Length', $length);
 
@@ -109,7 +134,7 @@ class SoftServer extends Soft
         } else {
             $this->sendHeaders();
 
-            $response = $data;
+            readfile($image_path);
         }
 
         return $response;
