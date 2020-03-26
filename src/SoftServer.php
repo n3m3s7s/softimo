@@ -119,6 +119,10 @@ class SoftServer extends Soft
             $length = filesize($image_path);
         }
 
+        if($this->mime === 'image/webp' && $length % 2 === 1){
+            $length++;
+        }
+
         $this->header('Content-Type', $mime);
         $this->header('Content-Length', $length);
 
@@ -131,13 +135,17 @@ class SoftServer extends Soft
                 $response->header($key,$value);
             }
 
+            echo $response;
+
         } else {
             $this->sendHeaders();
 
             readfile($image_path);
         }
 
-        return $response;
+        if($this->mime === 'image/webp'){
+            echo '\0';
+        }
     }
 
     private function sendHeaders(){
@@ -152,10 +160,10 @@ class SoftServer extends Soft
 
         try{
             $img = Image::make($this->outputFile);
-            echo $this->raw($img);
+            $this->raw($img);
             exit();
         }catch(\Exception $e){
-            Utils::error($e->getMessage(),'RESPONSE');
+            Utils::error($e->getMessage(),'RESPONSE ERROR');
         }
 
     }
