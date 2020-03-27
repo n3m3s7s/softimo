@@ -29,7 +29,7 @@ class SoftServer extends Soft
 
                 $this->header('Expires', $expires);
                 $this->header('Last-Modified', $last_modified_gmt);
-                $this->header('Cache-Control', 'max-age=2592000, public');
+                $this->header('Cache-Control', 'max-age=31536000, public');
                 $this->header('ETag', "\"$etag\"");
                 Utils::log($last_modified_gmt,"Last-Modified");
             }
