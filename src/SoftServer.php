@@ -144,7 +144,7 @@ class SoftServer extends Soft
         }
 
         if($this->mime === 'image/webp'){
-            echo '\0';
+            //echo '\0';
         }
     }
 
