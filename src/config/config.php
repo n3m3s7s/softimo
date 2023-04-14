@@ -8,6 +8,7 @@ return [
     'image' => [
         'quality' => 80, //The default quality value (mainly for Jpg)
         'upscaling' => false, //Enable/disable the upscaling during an image resizing process
+        'fix_webp_bytecode' => false, //Enable/disable auto-fixing 0 bytecode for WEBp raw response
     ],
     'placeholder' => [
         'enabled' => true, //Enable/disable the placeholder usage; if true the placeholder image will be used it the source image does not exist

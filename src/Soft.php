@@ -43,7 +43,7 @@ class Soft
         //Setup cache
         $this->cache = $settings['cache'];
         if ($this->cache) {
-            if (!isset($settings['cacheDir']) OR $settings['cacheDir'] == null) {
+            if (!isset($settings['cacheDir']) or $settings['cacheDir'] == null) {
                 $settings['cacheDir'] = sys_get_temp_dir();
             } else {
                 if (!is_dir($settings['cacheDir'])) {
@@ -66,7 +66,7 @@ class Soft
         }
 
         //Setup source dir
-        if (!isset($settings['sourceDir']) OR $settings['sourceDir'] == null) {
+        if (!isset($settings['sourceDir']) or $settings['sourceDir'] == null) {
             $settings['sourceDir'] = SOFT_WORKSPACE;
         } else {
             if (!is_readable($settings['sourceDir'])) {
@@ -76,7 +76,7 @@ class Soft
         }
 
         //Setup watermarks
-        if (!isset($settings['watermarkDir']) OR $settings['watermarkDir'] == null) {
+        if (!isset($settings['watermarkDir']) or $settings['watermarkDir'] == null) {
             $settings['watermarkDir'] = $settings['sourceDir'];
         } else {
             if (!is_readable($settings['watermarkDir'])) {
@@ -97,7 +97,7 @@ class Soft
             $this->settings = Utils::merge_config($this->settings, $config);
         }
         //could be the location of a config file
-        if (file_exists($config) AND is_readable($config)) {
+        if (file_exists($config) and is_readable($config)) {
             $array = include $config;
             $this->settings = Utils::merge_config($this->settings, $array);
         }
@@ -113,6 +113,8 @@ class Soft
     public function setSourceFile($sourceFile)
     {
         $this->applySettings();
+        $glideServer = $this->createServer();
+        $presetCommands = $this->getPresetManipulations();
         $settings = $this->settings;
         if (Utils::serverOS() == 1) {
             $sourceFile = iconv("UTF-8", "ISO-8859-1//TRANSLIT", $sourceFile);
@@ -140,7 +142,7 @@ class Soft
         if (strpos(strtolower($sourceFile), '.webp') !== false) {
             $sourceFile = str_replace('.webp', '', $sourceFile);
             $this->modification('fm', 'webp');
-            if (!isset($this->modificationParameters['q'])) {
+            if (!isset($this->modificationParameters['q']) || !isset($presetCommands['q'])) {
                 $this->modification('q', 75);
             }
         }
@@ -187,6 +189,10 @@ class Soft
      */
     public function createServer()
     {
+        if (null !== $this->glideServer) {
+            return $this->glideServer;
+        }
+
         $settings = $this->settings;
 
         $cacheDir = $settings['cacheDir'];
@@ -208,6 +214,22 @@ class Soft
         return $this->glideServer;
     }
 
+    /**
+     * @return array
+     */
+    public function getPresetManipulations()
+    {
+        if ($this->modificationParameters && isset($this->modificationParameters['p'])) {
+            $preset = $this->modificationParameters['p'];
+            Utils::log($preset, "Preset that will be applied to the image");
+            $presets = $this->glideServer->getPresets();
+            $commands = isset($presets[$preset]) ? $presets[$preset] : [];
+            Utils::log($commands, "Preset commands");
+            return $commands;
+        }
+        return [];
+    }
+
 
     //Process the image
     protected function process()
@@ -226,6 +248,11 @@ class Soft
 
         $modificationParameters = $this->modificationParameters ? $this->modificationParameters : null;
         Utils::log($modificationParameters, "Modifications that will be applied to the image");
+        $commands = $this->getPresetManipulations();
+        if (isset($modificationParameters['q']) && isset($commands['q'])) {
+            unset($modificationParameters['q']);
+        }
+        $this->modificationParameters = $modificationParameters;
         $cacheFileExists = $glideServer->cacheFileExists($sourceFileName, $modificationParameters);
         if ($isGif) {
             $conversionResult = $this->sourceFilepath;
@@ -235,7 +262,7 @@ class Soft
         }
 
         $this->outputFile = $conversionResult;
-        if ($cacheFileExists === false){
+        if ($cacheFileExists === false) {
             $this->handleSavedFile();
             try {
                 $this->optimize();
@@ -250,7 +277,7 @@ class Soft
     protected function handleSavedFile()
     {
         Utils::log($this->modificationParameters, __METHOD__);
-        if(isset($this->modificationParameters['fm']) && $this->modificationParameters['fm'] === 'webp'){
+        if (isset($this->modificationParameters['fm']) && $this->modificationParameters['fm'] === 'webp') {
             // Fix WebP binary
             Utils::log(filesize($this->outputFile), 'FILESIZE');
             if (filesize($this->outputFile) % 2 === 1) {
@@ -269,7 +296,7 @@ class Soft
             return;
         }
         Utils::log('Optimizing file');
-        if(isset($this->modificationParameters['fm']) && $this->modificationParameters['fm'] === 'webp'){
+        if (isset($this->modificationParameters['fm']) && $this->modificationParameters['fm'] === 'webp') {
             Utils::log('DO NOT optimize cached file on WEBP, since it is already optimized - Exit #1');
             return;
         }
@@ -303,7 +330,7 @@ class Soft
                 break;
         }
 
-        if($format === 'webp'){
+        if ($format === 'webp') {
             Utils::log('DO NOT optimize cached file on WEBP, since it is already optimized - Exit #2');
             return;
         }

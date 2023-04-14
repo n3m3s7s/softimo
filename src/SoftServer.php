@@ -1,6 +1,7 @@
 <?php
 
 namespace N3m3s7s\Soft;
+
 use Intervention\Image\ImageManagerStatic as Image;
 
 class SoftServer extends Soft
@@ -11,13 +12,13 @@ class SoftServer extends Soft
         parent::__construct();
 
         $param = $_GET['param'];
-        Utils::log($param,'Modification parameter');
-        $command = explode('/',$param)[0];
-        $sourceFile = str_replace($command.'/','',$param);
-        Utils::log($sourceFile,'Given SourceFile');
+        Utils::log($param, 'Modification parameter');
+        $command = explode('/', $param)[0];
+        $sourceFile = str_replace($command . '/', '', $param);
+        Utils::log($sourceFile, 'Given SourceFile');
         $this->setSourceFile($sourceFile);
 
-        if($this->usingPlaceholder == false){
+        if ($this->usingPlaceholder == false) {
             $this->header('Cache-Control', 'public');
             $last_modified_gmt = $etag = $expires = null;
             $last_modified = is_file($this->sourceFilepath) ? filemtime($this->sourceFilepath) : null;
@@ -31,7 +32,7 @@ class SoftServer extends Soft
                 $this->header('Last-Modified', $last_modified_gmt);
                 $this->header('Cache-Control', 'max-age=31536000, public');
                 $this->header('ETag', "\"$etag\"");
-                Utils::log($last_modified_gmt,"Last-Modified");
+                Utils::log($last_modified_gmt, "Last-Modified");
             }
 
             // Check to see if the requested image needs to be generated or if a 304
@@ -51,39 +52,39 @@ class SoftServer extends Soft
     }
 
 
-
-    public function header($key,$value){
+    public function header($key, $value)
+    {
         $this->headers[$key] = $value;
     }
 
 
-
-    private function processCommand($command){
+    private function processCommand($command)
+    {
         $settings = $this->settings;
 
         //parse directives
-        $directives = explode(',',$command);
+        $directives = explode(',', $command);
 
-        foreach($directives as $directive){
-            $directive = str_replace('|',',',$directive);
+        foreach ($directives as $directive) {
+            $directive = str_replace('|', ',', $directive);
             if (strpos($directive, '_') !== false) {
-                list($modifier,$value) = explode('_',$directive);
-            }else{
+                list($modifier, $value) = explode('_', $directive);
+            } else {
                 $modifier = 'p';
                 $value = $directive;
             }
 
-            $this->modification($modifier,$value);
+            $this->modification($modifier, $value);
         }
 
         //automatic modifications
-        if(!isset($this->modificationParameters['q'])){
-            $this->modification('q',$settings['image']['quality']);
+        if (!isset($this->modificationParameters['q'])) {
+            $this->modification('q', $settings['image']['quality']);
         }
 
-        if(isset($this->modificationParameters['fm'])){
+        if (isset($this->modificationParameters['fm'])) {
             $format = $this->modificationParameters['fm'];
-            switch ($format){
+            switch ($format) {
                 case 'pjpg':
                 case 'jpeg':
                 case 'jpg':
@@ -98,41 +99,36 @@ class SoftServer extends Soft
             }
         }
 
-        Utils::log($this->modificationParameters,'MODIFICATIONS');
+        Utils::log($this->modificationParameters, 'MODIFICATIONS');
     }
-
-
-
-
-
 
 
     private function raw($img)
     {
         $image_path = $img->basePath();
-        if(!isset($this->mime)){
+        if (!isset($this->mime)) {
             $data = file_get_contents($image_path);
             $mime = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $data);
             $length = strlen($data);
-        }else{
+        } else {
             $mime = $this->mime;
             $length = filesize($image_path);
         }
 
-        if($this->mime === 'image/webp' && $length % 2 === 1){
+        if ($this->mime === 'image/webp' && $length % 2 === 1) {
             $length++;
         }
 
         $this->header('Content-Type', $mime);
         $this->header('Content-Length', $length);
 
-        Utils::log($this->headers,"OUTPUT HEADERS");
+        Utils::log($this->headers, "OUTPUT HEADERS");
 
         if (function_exists('app') && is_a($app = app(), 'Illuminate\Foundation\Application')) {
 
             $response = \Response::make($data);
-            foreach($this->headers as $key => $value){
-                $response->header($key,$value);
+            foreach ($this->headers as $key => $value) {
+                $response->header($key, $value);
             }
 
             echo $response;
@@ -143,27 +139,31 @@ class SoftServer extends Soft
             readfile($image_path);
         }
 
-        if($this->mime === 'image/webp'){
-            //echo '\0';
+        $fixWebp = isset($this->settings['image']['fix_webp_bytecode']) && true === $this->settings['image']['fix_webp_bytecode'];
+
+        if ($fixWebp && $this->mime === 'image/webp') {
+            echo '\0';
         }
     }
 
-    private function sendHeaders(){
-        foreach($this->headers as $key => $value){
-            header(sprintf("%s: %s",$key,$value));
+    private function sendHeaders()
+    {
+        foreach ($this->headers as $key => $value) {
+            header(sprintf("%s: %s", $key, $value));
         }
     }
 
-    public function response(){
+    public function response()
+    {
 
-        Utils::log($this->outputFile,'OUTPUT FILE');
+        Utils::log($this->outputFile, 'OUTPUT FILE');
 
-        try{
+        try {
             $img = Image::make($this->outputFile);
             $this->raw($img);
             exit();
-        }catch(\Exception $e){
-            Utils::error($e->getMessage(),'RESPONSE ERROR');
+        } catch (\Exception $e) {
+            Utils::error($e->getMessage(), 'RESPONSE ERROR');
         }
 
     }

@@ -13,6 +13,7 @@
     "require": {
         "php": ">=5.4.0",
         "ext-gd": "*",
+        "ext-fileinfo": "*",
         "illuminate/support": "5.*",
         "league/glide": "^1.0"
     },
